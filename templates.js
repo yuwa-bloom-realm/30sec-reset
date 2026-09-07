@@ -396,6 +396,9 @@
         // click と touchstart の二重発火を防ぐ(触った直後の click を無視)
         let lastTouch = 0;
         function spark(x, y) {
+          // 座標が取れないときは画面中央に出す(iOS対策)
+          if (x == null || isNaN(x)) x = window.innerWidth / 2;
+          if (y == null || isNaN(y)) y = window.innerHeight / 2;
           const s = document.createElement("div");
           s.className = "tap-spark";
           s.style.left = x + "px";
@@ -405,8 +408,10 @@
         }
         function onTouch(e) {
           lastTouch = Date.now();
-          const t = e.touches[0];
-          spark(t.clientX, t.clientY);
+          let x, y;
+          if (e.touches && e.touches[0]) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
+          else if (e.changedTouches && e.changedTouches[0]) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; }
+          spark(x, y);
           reveal();
         }
         function onClick(e) {
@@ -414,11 +419,11 @@
           spark(e.clientX, e.clientY);
           reveal();
         }
-        document.addEventListener("touchstart", onTouch, { passive: true });
+        document.addEventListener("touchend", onTouch, { passive: true });
         document.addEventListener("click", onClick);
 
         return H.makeStop(timers, function () {
-          document.removeEventListener("touchstart", onTouch);
+          document.removeEventListener("touchend", onTouch);
           document.removeEventListener("click", onClick);
           hint.remove();
         });
