@@ -679,7 +679,7 @@
     // yuwa world から ?from=world 付きで開かれたときだけ表示する。
     // 直接開いた場合(戻り先が無い)はボタンを出さない。
     (function setupBackHome() {
-      const YUWA_WORLD_URL = "https://yuwa-bloom-realm.github.io/yuwa-world/";
+      const YUWA_WORLD_URL = "https://yuwa-bloom-realm.github.io/yuwa-world/yuwa-world.html";
       const btn = document.getElementById("backhome");
       const params = new URLSearchParams(location.search);
       const fromWorld = params.get("from") === "world";
