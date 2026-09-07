@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>灯りの部屋 — 30秒リセット</title>
+<style>
+  :root {
+    --ink: #f3ede2;
+    --ink-soft: rgba(243, 237, 226, 0.72);
+    --veil: rgba(18, 14, 20, 0.42);
+    --fade: 1600ms;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+    background: #0d0a10;
+    color: var(--ink);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 背景レイヤー(2枚重ねでクロスフェード) */
+  .bg {
+    position: fixed;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity var(--fade) ease;
+    z-index: 0;
+  }
+  .bg.show { opacity: 1; }
+
+  /* 背景の上の薄暗がり(文字可読性のため) */
+  .veil {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(13, 10, 16, 0.30) 0%,
+      rgba(13, 10, 16, 0.10) 40%,
+      rgba(13, 10, 16, 0.55) 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* 天気エフェクト(雨・雪をコードで降らせる。背景の上・文字の下) */
+  #weatherFx {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* 雷のフラッシュ(画面全体がピカッと光る) */
+  #lightning {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: #eaf2ff;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #lightning.flash {
+    animation: lightningFlash 900ms ease-out;
+  }
+  @keyframes lightningFlash {
+    0%   { opacity: 0; }
+    6%   { opacity: 0.72; }
+    12%  { opacity: 0.15; }
+    18%  { opacity: 0.55; }
+    28%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #lightning.flash { animation: none; }
+  }
+
+  /* コンテンツ */
+  .stage {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.4rem 1.8rem;
+    text-align: center;
+  }
+
+  .greeting {
+    font-size: 0.95rem;
+    letter-spacing: 0.35em;
+    color: var(--ink-soft);
+    margin-bottom: 2.2rem;
+    text-indent: 0.35em;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .message {
+    font-size: 1.55rem;
+    line-height: 2.4;
+    max-width: 22em;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.55);
+    white-space: pre-line;
+  }
+  .message .line {
+    display: block;
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  /* 本文が締めに切り替わるときのフェードアウト */
+  .message.retire {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 1200ms ease, transform 1200ms ease;
+  }
+
+  /* 締めの言葉 */
+  .closing {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, calc(-50% + 18px));
+    z-index: 2;
+    font-size: 2.1rem;
+    line-height: 2.1;
+    letter-spacing: 0.08em;
+    max-width: 20em;
+    text-align: center;
+    text-shadow: 0 2px 22px rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    white-space: pre-line;
+  }
+  .closing.show {
+    animation: closingRise 1800ms ease forwards;
+  }
+  @keyframes closingRise {
+    0%   { opacity: 0; transform: translate(-50%, calc(-50% + 18px)); }
+    100% { opacity: 1; transform: translate(-50%, -50%); }
+  }
+  @media (max-width: 480px) {
+    .closing { font-size: 1.7rem; }
+  }
+
+  /* 30秒プログレス(下部の細い灯り) */
+  .timer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    z-index: 3;
+    background: rgba(243, 237, 226, 0.12);
+  }
+  .timer .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(255,214,150,0.4), rgba(255,224,178,0.95));
+    box-shadow: 0 0 12px rgba(255, 214, 150, 0.7);
+  }
+
+  .replay {
+    position: fixed;
+    z-index: 4;
+    bottom: 1.6rem;
+    right: 1.6rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    background: rgba(20, 16, 24, 0.4);
+    border: 1px solid rgba(243, 237, 226, 0.22);
+    border-radius: 999px;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 600ms ease, background 300ms ease;
+    backdrop-filter: blur(4px);
+  }
+  .replay.show { opacity: 1; }
+  .replay:hover { background: rgba(40, 32, 48, 0.6); }
+
+  /* アニメーション */
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .anim-greeting { animation: rise 1400ms ease forwards; }
+  .anim-line { animation: rise 1600ms ease forwards; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bg { transition: none; }
+    .greeting, .message .line { opacity: 1 !important; transform: none !important; animation: none !important; }
+  }
+
+  /* ===== テンプレート用スタイル ===== */
+  /* 一斉フェードイン */
+  @keyframes fadeInSoft { from { opacity: 0; } to { opacity: 1; } }
+  /* ズームしながら現れる */
+  @keyframes zoomIn { from { opacity: 0; transform: translateY(0) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  /* 左からすっと */
+  @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+  /* ゆっくり明滅(呼吸) */
+  @keyframes breathe { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+  /* 文字が下から一枚ずつ */
+  @keyframes riseBlur { from { opacity: 0; transform: translateY(20px); filter: blur(6px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+
+  .message .line.tpl-fade   { animation: fadeInSoft 2000ms ease forwards; }
+  .message .line.tpl-zoom   { animation: zoomIn 1600ms ease forwards; }
+  .message .line.tpl-slide  { animation: slideInLeft 1400ms ease forwards; }
+  .message .line.tpl-rise   { animation: riseBlur 1800ms ease forwards; }
+  .message.tpl-breathe .line { animation: fadeInSoft 2000ms ease forwards; }
+  .message.tpl-breathe { animation: breathe 6000ms ease-in-out 2200ms infinite; }
+
+  /* 締めの出方バリエーション */
+  .closing.tpl-closing-zoom.show { animation: zoomIn 1800ms ease forwards; }
+  .closing.tpl-closing-fade.show { animation: fadeInSoft 2200ms ease forwards; }
+
+  /* タップ演出:触れた場所の光の粒 */
+  .tap-spark {
+    position: fixed;
+    z-index: 2;
+    width: 10px; height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,235,190,0.95), rgba(255,214,150,0));
+    pointer-events: none;
+    animation: tapSpark 900ms ease-out forwards;
+  }
+  @keyframes tapSpark {
+    0%   { opacity: 0.9; transform: scale(0.4); }
+    100% { opacity: 0;   transform: scale(4.5); }
+  }
+  /* タップ待ちのやさしいヒント */
+  .tap-hint {
+    position: fixed;
+    left: 50%; bottom: 18%;
+    transform: translateX(-50%);
+    z-index: 2;
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+    opacity: 0;
+    animation: breathe 3200ms ease-in-out infinite;
+  }
+  .tap-hint.show { opacity: 1; }
+
+  @media (max-width: 480px) {
+    .message { font-size: 1.3rem; line-height: 2.2; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg" id="bgA"></div>
+  <div class="bg" id="bgB"></div>
+  <canvas id="weatherFx"></canvas>
+  <div id="lightning"></div>
+  <div class="veil"></div>
+
+  <div class="stage">
+    <div class="greeting" id="greeting"></div>
+    <div class="message" id="message"></div>
+    <div class="closing" id="closing"></div>
+  </div>
+
+  <div class="timer"><div class="fill" id="timerFill"></div></div>
+  <button class="replay" id="replay">もう一度</button>
+
+  <!-- ============================================================= -->
+  <!--  データ定義:ここだけ触れば内容を追加・変更できます            -->
+  <!-- ============================================================= -->
+  <script src="templates.js"></script>
+  <script src="content-data.js"></script>
+
+  <!-- ============================================================= -->
+  <!--  エンジン:基本さわらなくてOK                                  -->
+  <!-- ============================================================= -->
+  <script>
+  (function () {
+    "use strict";
+
+    // ---- 時間帯の境界(ここの数字を変えれば朝昼夜の区切りが変わる)----
+    const TIME_RANGES = [
+      { zone: "morning",   start: 5,  end: 11 },  // 5:00〜10:59
+      { zone: "afternoon", start: 11, end: 17 },  // 11:00〜16:59
+      { zone: "night",     start: 17, end: 5  },  // 17:00〜翌4:59(日をまたぐ)
+    ];
+
+    const RESET_DURATION = 30000; // 30秒(ミリ秒)
+
+    // データにtemplate指定が無いときに使うテンプレ
+    const DEFAULT_TEMPLATE = "fadeLines";
+
+    // 背景画像を置くフォルダ("" ならHTMLと同じ階層。"bg/" ならbgフォルダ)
+    const BG_DIR = "bg/";
+
+    // ---- 天気設定 ----------------------------------------------------
+    // 鹿児島の緯度・経度に固定。別の街にしたいときはここの数字を変える。
+    const WEATHER = {
+      enabled: true,          // 天気連動を止めたいときは false
+      lat: 31.5966,           // 鹿児島市
+      lon: 130.5571,
+      // 天気背景を使うか(true なら bg_MM_zone_曇雨雪.jpg を読む)。
+      // 画像がまだ無い天気は、通常背景のまま雨/雪エフェクトだけ乗る。
+      useWeatherBg: true,
+    };
+
+    // ---- 現在の日時コンテキストを取得 ----
+    function getContext() {
+      const now = new Date();
+      const hour = now.getHours();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+
+      let zone = "night";
+      for (const r of TIME_RANGES) {
+        if (r.start < r.end) {
+          if (hour >= r.start && hour < r.end) { zone = r.zone; break; }
+        } else {
+          // 日をまたぐ区分(例 17〜翌5)
+          if (hour >= r.start || hour < r.end) { zone = r.zone; break; }
+        }
+      }
+      return { now, hour, month: mm, day: dd, dateKey: mm + "-" + dd, zone };
+    }
+
+    // ---- コンテンツ解決(特定日 > その日 > その月の汎用 > デフォルト)----
+    function resolveContent(ctx) {
+      // 1. 特定日チェック
+      const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
+      if (special && special[ctx.zone]) {
+        return { data: special[ctx.zone], special: true };
+      }
+      // 2. その日のデータ
+      const day = (window.DAY_CONTENT || {})[ctx.dateKey];
+      if (day && day[ctx.zone]) {
+        return { data: day[ctx.zone], special: false };
+      }
+      // 3. その月の汎用文
+      const monthly = (window.MONTHLY_FALLBACK || {})[ctx.month];
+      if (monthly && monthly[ctx.zone]) {
+        return { data: monthly[ctx.zone], special: false };
+      }
+      // 4. デフォルト共通文
+      const def = (window.DEFAULT_FALLBACK || {})[ctx.zone];
+      return { data: def || { greeting: "", lines: ["…"] }, special: false };
+    }
+
+    // ---- 背景解決(特定日 > 天気×月×時間帯 > 月×時間帯)----
+    function resolveBackground(ctx, contentResult) {
+      const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
+      if (contentResult.special && special && special.bg) {
+        return BG_DIR + special.bg; // 例:bg/bg_special_christmas.jpg
+      }
+      // 天気背景。曇・雨・雷・雪はすべて「曇り背景」を流用し、
+      // その上に雨/雷/雪の演出を重ねる(ちゃぴぴは晴・曇の2枚だけ用意)。
+      // 例:9月の昼が雨 → bg/bg_09_afternoon_cloudy.jpg を使う
+      if (WEATHER.enabled && WEATHER.useWeatherBg && ctx.weather && ctx.weather !== "clear") {
+        return BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + "_cloudy.jpg";
+      }
+      // 通常:bg/bg_MM_zone.jpg
+      return BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + ".jpg";
+    }
+
+    // ---- 背景クロスフェード(画像が無ければ通常背景に自動フォールバック)----
+    let activeBg = null;
+    function setBackground(url, fallbackUrl) {
+      const a = document.getElementById("bgA");
+      const b = document.getElementById("bgB");
+      const next = (activeBg === a) ? b : a;
+      const prev = activeBg;
+
+      // 画像の存在を確認してから表示(天気背景が未用意でも崩れない)
+      const img = new Image();
+      img.onload = function () {
+        next.style.backgroundImage = "url('" + url + "')";
+        next.classList.add("show");
+        if (prev) prev.classList.remove("show");
+        activeBg = next;
+      };
+      img.onerror = function () {
+        const use = fallbackUrl || url;
+        next.style.backgroundImage = "url('" + use + "')";
+        next.classList.add("show");
+        if (prev) prev.classList.remove("show");
+        activeBg = next;
+      };
+      img.src = url;
+    }
+
+    // ---- テキスト描画＋演出 ----
+    function render() {
+      const ctx = getContext();
+
+      // 天気連動:まず通常背景で即描画 → 天気が取れたら差し替え
+      drawScene(ctx);
+
+      if (WEATHER.enabled) {
+        fetchWeather().then(function (weather) {
+          if (!weather) return;
+          ctx.weather = weather;          // clear / cloudy / rain / snow
+          const result = resolveContent(ctx);
+          const bgUrl = resolveBackground(ctx, result);
+          const fallback = BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + ".jpg";
+          setBackground(bgUrl, fallback); // 天気背景へ(無ければ通常へ)
+          startWeatherFx(weather);        // 雨・雪を降らせる
+        }).catch(function () { /* 天気失敗時は通常のまま */ });
+      }
+    }
+
+    // 実際のシーン描画(背景 → テンプレ演出を起動)
+    let currentPlayback = null;
+    function drawScene(ctx) {
+      const result = resolveContent(ctx);
+      const content = result.data;
+      const bgUrl = resolveBackground(ctx, result);
+      const fallback = BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + ".jpg";
+
+      setBackground(bgUrl, fallback);
+
+      // 前回の演出が動いていたら止める(もう一度/再描画時)
+      if (currentPlayback && currentPlayback.stop) currentPlayback.stop();
+
+      // テンプレを解決(指定が無ければ既定テンプレ)
+      const tplName = content.template || DEFAULT_TEMPLATE;
+      const tpl = (window.TEMPLATES || {})[tplName] || (window.TEMPLATES || {})[DEFAULT_TEMPLATE];
+
+      // ステージ(テンプレが描画に使うDOMと道具一式)
+      const stage = {
+        greeting: document.getElementById("greeting"),
+        message:  document.getElementById("message"),
+        closing:  document.getElementById("closing"),
+        duration: RESET_DURATION,
+        onComplete: function () { document.getElementById("replay").classList.add("show"); },
+      };
+
+      // タイマーバーは共通で動かす
+      startTimerBar();
+
+      // テンプレ実行。戻り値に stop() があれば保持(次回クリーンアップ用)
+      if (tpl && typeof tpl.run === "function") {
+        currentPlayback = tpl.run(stage, content, content.options || {}) || null;
+      }
+    }
+
+    // ================================================================
+    //  天気連動(Open-Meteo・無料/登録不要)
+    // ================================================================
+    // WMO天気コード → 4分類(clear / cloudy / rain / snow)
+    function classifyWeather(code) {
+      if (code === 0 || code === 1) return "clear";
+      if (code === 2 || code === 3 || code === 45 || code === 48) return "cloudy";
+      // 雪・霜系
+      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
+      // 雨・霧雨・にわか雨・雷雨
+      if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95) return "rain";
+      return "cloudy";
+    }
+
+    // 天気を1回取得(10分キャッシュで通信を節約)
+    function fetchWeather() {
+      const CACHE_MS = 10 * 60 * 1000;
+      try {
+        const cached = JSON.parse(sessionStorage.getItem("weatherCache") || "null");
+        if (cached && (Date.now() - cached.t) < CACHE_MS) {
+          return Promise.resolve(cached.w);
+        }
+      } catch (e) {}
+
+      const url = "https://api.open-meteo.com/v1/forecast?latitude=" +
+        WEATHER.lat + "&longitude=" + WEATHER.lon + "&current=weather_code";
+
+      return fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+        const code = data && data.current && data.current.weather_code;
+        if (code === undefined || code === null) return null;
+        const w = classifyWeather(code);
+        try { sessionStorage.setItem("weatherCache", JSON.stringify({ t: Date.now(), w: w })); } catch (e) {}
+        return w;
+      });
+    }
+
+    // ---- 雨・雪の描画(canvas)----
+    let fxRAF = null;
+    let thunderTimer = null;
+    function startWeatherFx(weather) {
+      const canvas = document.getElementById("weatherFx");
+      const ctx2d = canvas.getContext("2d");
+      if (fxRAF) cancelAnimationFrame(fxRAF);
+      if (thunderTimer) clearTimeout(thunderTimer);
+      ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 雨のときは雷も鳴らす(ランダム間隔でピカッ)
+      if (weather === "rain") startThunder();
+
+      if (weather !== "rain" && weather !== "snow") return; // 晴・曇は降らせない
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resize();
+      window.onresize = resize;
+
+      const isSnow = (weather === "snow");
+      const count = isSnow ? 90 : 160;
+      const particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push(makeParticle(canvas, isSnow));
+      }
+
+      function draw() {
+        ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+        for (const p of particles) {
+          if (isSnow) {
+            ctx2d.beginPath();
+            ctx2d.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx2d.fillStyle = "rgba(255,255,255," + p.a + ")";
+            ctx2d.fill();
+            p.y += p.vy;
+            p.x += Math.sin(p.y / 40) * p.drift;
+          } else {
+            ctx2d.beginPath();
+            ctx2d.moveTo(p.x, p.y);
+            ctx2d.lineTo(p.x + p.slant, p.y + p.len);
+            ctx2d.strokeStyle = "rgba(190,205,225," + p.a + ")";
+            ctx2d.lineWidth = p.w;
+            ctx2d.stroke();
+            p.y += p.vy;
+            p.x += p.slant * 0.15;
+          }
+          if (p.y > canvas.height + 20) {
+            Object.assign(p, makeParticle(canvas, isSnow), { y: -20 });
+          }
+        }
+        fxRAF = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    function makeParticle(canvas, isSnow) {
+      if (isSnow) {
+        return {
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: 1.2 + Math.random() * 2.4,
+          vy: 0.5 + Math.random() * 1.1,
+          drift: 0.3 + Math.random() * 0.7,
+          a: 0.5 + Math.random() * 0.5,
+        };
+      }
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        len: 12 + Math.random() * 16,
+        slant: 2 + Math.random() * 3,
+        vy: 9 + Math.random() * 7,
+        w: 0.8 + Math.random() * 0.8,
+        a: 0.18 + Math.random() * 0.32,
+      };
+    }
+
+    // ---- 雷(ランダム間隔でピカッと光る)----
+    // 頻度はここで調整:次の雷までの待ち時間(ミリ秒)
+    const THUNDER_MIN = 4000;   // 最短4秒
+    const THUNDER_MAX = 12000;  // 最長12秒
+    function startThunder() {
+      const el = document.getElementById("lightning");
+      function flashOnce() {
+        el.classList.remove("flash");
+        void el.offsetWidth;      // アニメをリセット
+        el.classList.add("flash");
+        const wait = THUNDER_MIN + Math.random() * (THUNDER_MAX - THUNDER_MIN);
+        thunderTimer = setTimeout(flashOnce, wait);
+      }
+      // 最初の雷は数秒おいてから
+      thunderTimer = setTimeout(flashOnce, 2500 + Math.random() * 3000);
+    }
+
+    // 締めの言葉を取り出す(配列でも文字列でもOK。無ければ null)
+    function resolveClosing(content) {
+      if (!content.closing) return null;
+      if (Array.isArray(content.closing)) {
+        return content.closing.join("\n");
+      }
+      return String(content.closing);
+    }
+
+    // ---- 30秒タイマーバー(進捗の灯り。締めの表示はテンプレ側の役目)----
+    let timerRAF = null;
+    let timerStart = null;
+    function startTimerBar() {
+      const fill = document.getElementById("timerFill");
+      const replay = document.getElementById("replay");
+      replay.classList.remove("show");
+      if (timerRAF) cancelAnimationFrame(timerRAF);
+      timerStart = performance.now();
+
+      function step(t) {
+        const elapsed = t - timerStart;
+        const pct = Math.min(100, (elapsed / RESET_DURATION) * 100);
+        fill.style.width = pct + "%";
+        if (elapsed < RESET_DURATION) {
+          timerRAF = requestAnimationFrame(step);
+        }
+      }
+      timerRAF = requestAnimationFrame(step);
+    }
+
+    // テンプレから使える共通ヘルパを公開
+    window.RESET_HELPERS = {
+      resolveClosing: resolveClosing,
+      duration: RESET_DURATION,
+    };
+
+    document.getElementById("replay").addEventListener("click", render);
+
+    // 初回起動
+    render();
+  })();
+  </script>
+</body>
+</html>

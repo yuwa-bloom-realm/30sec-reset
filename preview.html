@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>背景プレビュー</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Hiragino Mincho ProN","Yu Mincho",serif; background:#14101a; color:#f3ede2; padding:1rem; }
+  h1 { font-size:1.1rem; font-weight:normal; letter-spacing:0.1em; text-align:center; margin:1rem 0; opacity:0.85; }
+  .sub { text-align:center; font-size:0.8rem; opacity:0.5; margin-bottom:1.5rem; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem; max-width:900px; margin:0 auto; }
+  .card { border-radius:12px; overflow:hidden; background:#0d0a10; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+  .card img { width:100%; height:280px; object-fit:cover; display:block; }
+  .card .label { padding:0.7rem 0.9rem; font-size:0.9rem; }
+  .card .file { font-size:0.72rem; opacity:0.5; font-family:monospace; }
+  .missing { display:flex; align-items:center; justify-content:center; height:280px; color:#a55; font-size:0.85rem; }
+</style>
+</head>
+<body>
+  <h1>灯りの部屋 — 背景プレビュー</h1>
+  <div class="sub">月を増やしたらここに追記すると一覧で確認できます</div>
+  <div class="grid" id="grid"></div>
+  <script>
+    // 確認したい背景をここに足すだけ
+    const items = [
+      ["9月 朝・晴れ",   "bg/bg_09_morning.jpg"],
+      ["9月 昼・晴れ",   "bg/bg_09_afternoon.jpg"],
+      ["9月 夜・晴れ",   "bg/bg_09_night.jpg"],
+      ["9月 朝・曇り",   "bg/bg_09_morning_cloudy.jpg"],
+      ["9月 昼・曇り",   "bg/bg_09_afternoon_cloudy.jpg"],
+      ["9月 夜・曇り",   "bg/bg_09_night_cloudy.jpg"],
+    ];
+    const grid = document.getElementById("grid");
+    items.forEach(([label, file]) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const img = document.createElement("img");
+      img.src = file;
+      img.onerror = () => { img.replaceWith(Object.assign(document.createElement("div"),
+        { className:"missing", textContent:"画像が見つかりません" })); };
+      const cap = document.createElement("div");
+      cap.className = "label";
+      cap.innerHTML = label + '<div class="file">' + file + '</div>';
+      card.appendChild(img); card.appendChild(cap); grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
