@@ -302,7 +302,7 @@
     const DEFAULT_TEMPLATE = "fadeLines";
 
     // 背景画像を置くフォルダ("" ならHTMLと同じ階層。"bg/" ならbgフォルダ)
-    const BG_DIR = "";  // 背景はルート直下(GitHubにバラでアップした構成に合わせる)
+    const BG_DIR = "";  // 背景はルート直下
 
     // ---- 天気設定 ----------------------------------------------------
     // 鹿児島の緯度・経度に固定。別の街にしたいときはここの数字を変える。
@@ -430,6 +430,18 @@
 
       // 前回の演出が動いていたら止める(もう一度/再描画時)
       if (currentPlayback && currentPlayback.stop) currentPlayback.stop();
+
+      // 前回の表示状態をリセット(締めが残る・本文が引いたままを防ぐ)
+      const resetClosing = document.getElementById("closing");
+      resetClosing.className = "closing";
+      resetClosing.textContent = "";
+      const resetMessage = document.getElementById("message");
+      resetMessage.className = "message";
+      resetMessage.innerHTML = "";
+      const resetGreeting = document.getElementById("greeting");
+      resetGreeting.className = "greeting";
+      resetGreeting.textContent = "";
+      document.getElementById("replay").classList.remove("show");
 
       // テンプレを解決(指定が無ければ既定テンプレ)
       const tplName = content.template || DEFAULT_TEMPLATE;
