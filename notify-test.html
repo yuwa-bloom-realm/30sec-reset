@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通知テスト</title>
+<style>
+  body { font-family:"Hiragino Mincho ProN",serif; background:#0d0a16; color:#eee;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; margin:0; padding:1.5rem; text-align:center; gap:1.2rem; }
+  button { font-size:1.1rem; padding:1rem 2rem; border-radius:999px;
+    border:1px solid #d8b46a; background:rgba(216,180,106,.15); color:#f3e6c4;
+    cursor:pointer; }
+  button:active { background:rgba(216,180,106,.3); }
+  #log { font-size:.85rem; color:#9fd; white-space:pre-line; margin-top:1rem;
+    max-width:90%; line-height:1.8; }
+  h1 { font-size:1.1rem; font-weight:normal; opacity:.85; }
+</style>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  function log(msg){
+    const el = document.getElementById("log");
+    el.textContent += "\n" + msg;
+  }
+  // SDKが読めたか確認
+  window.addEventListener("load", function(){
+    log("ページ読み込み完了");
+    if(window.OneSignalDeferred){
+      OneSignalDeferred.push(async function(OneSignal){
+        try{
+          await OneSignal.init({ appId: "a5cd3c2f-82b8-4a01-89c0-a57622d2aee0" });
+          log("✓ OneSignal 起動OK");
+          const perm = OneSignal.Notifications.permission;
+          log("現在の通知許可: " + perm);
+          const supported = OneSignal.Notifications.isPushSupported();
+          log("この端末のPush対応: " + supported);
+        }catch(e){
+          log("✗ 初期化エラー: " + e.message);
+        }
+      });
+    } else {
+      log("✗ OneSignal SDK が読み込めていない");
+    }
+  });
+
+  function askNotify(){
+    log("ボタンが押された");
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal){
+      try{
+        log("通知許可をリクエスト中…");
+        await OneSignal.Notifications.requestPermission();
+        log("許可の結果: " + OneSignal.Notifications.permission);
+      }catch(e){
+        log("✗ リクエストエラー: " + e.message);
+      }
+    });
+  }
+</script>
+</head>
+<body>
+  <h1>OneSignal 通知テスト</h1>
+  <button onclick="askNotify()">通知を許可する</button>
+  <div id="log">ログ:</div>
+</body>
+</html>
