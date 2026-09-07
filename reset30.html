@@ -190,6 +190,32 @@
   .replay.show { opacity: 1; }
   .replay:hover { background: rgba(40, 32, 48, 0.6); }
 
+  /* 世界へ戻るボタン(yuwa worldから開かれたときだけ表示) */
+  .backhome {
+    position: fixed;
+    z-index: 5;
+    top: 1.2rem;
+    left: 1.2rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+    background: rgba(20, 16, 24, 0.4);
+    border: 1px solid rgba(243, 237, 226, 0.22);
+    border-radius: 999px;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer;
+    display: none;                 /* 既定は非表示 */
+    align-items: center;
+    gap: 0.4em;
+    backdrop-filter: blur(4px);
+    transition: background 300ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .backhome.show { display: inline-flex; }
+  .backhome:hover { background: rgba(40, 32, 48, 0.6); }
+  .backhome:active { background: rgba(60, 48, 72, 0.7); }
+
   /* アニメーション */
   @keyframes rise {
     to { opacity: 1; transform: translateY(0); }
@@ -275,6 +301,7 @@
 
   <div class="timer"><div class="fill" id="timerFill"></div></div>
   <button class="replay" id="replay">もう一度</button>
+  <button class="backhome" id="backhome">‹ 世界へ戻る</button>
 
   <!-- ============================================================= -->
   <!--  データ定義:ここだけ触れば内容を追加・変更できます            -->
@@ -647,6 +674,28 @@
     };
 
     document.getElementById("replay").addEventListener("click", render);
+
+    // ---- 「世界へ戻る」ボタン ----------------------------------------
+    // yuwa world から ?from=world 付きで開かれたときだけ表示する。
+    // 直接開いた場合(戻り先が無い)はボタンを出さない。
+    (function setupBackHome() {
+      const YUWA_WORLD_URL = "https://yuwa-bloom-realm.github.io/yuwa-world/";
+      const btn = document.getElementById("backhome");
+      const params = new URLSearchParams(location.search);
+      const fromWorld = params.get("from") === "world";
+
+      // ブラウザ履歴で戻れる(別タブでない同一タブ遷移)なら履歴を優先
+      if (fromWorld) {
+        btn.classList.add("show");
+        btn.addEventListener("click", function () {
+          if (history.length > 1 && document.referrer) {
+            history.back();               // 同じタブで来たなら履歴で戻る
+          } else {
+            location.href = YUWA_WORLD_URL; // それ以外は世界のURLへ
+          }
+        });
+      }
+    })();
 
     // 初回起動
     render();
