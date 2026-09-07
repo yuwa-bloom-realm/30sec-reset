@@ -399,15 +399,27 @@
     }
 
     // ---- テキスト描画＋演出 ----
+    let lastWeather = null;
     function render() {
       const ctx = getContext();
 
-      // 天気連動:まず通常背景で即描画 → 天気が取れたら差し替え
+      // 既に天気が分かっていれば、最初から正しい天気で描く
+      // (「もう一度」で晴れが一瞬チラ見えするのを防ぐ)
+      if (WEATHER.enabled && lastWeather) {
+        ctx.weather = lastWeather;
+      }
+
+      // 初回など天気未取得なら、まず通常背景で即描画 → あとで差し替え
       drawScene(ctx);
 
       if (WEATHER.enabled) {
         fetchWeather().then(function (weather) {
           if (!weather) return;
+          lastWeather = weather;          // 覚えておく
+          if (ctx.weather === weather) {  // 既に正しい背景で描けているなら
+            startWeatherFx(weather);      // 雨・雪だけ動かして終了
+            return;
+          }
           ctx.weather = weather;          // clear / cloudy / rain / snow
           const result = resolveContent(ctx);
           const bgUrl = resolveBackground(ctx, result);
