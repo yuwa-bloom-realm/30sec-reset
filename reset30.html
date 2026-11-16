@@ -354,6 +354,37 @@
       useWeatherBg: true,
     };
 
+    // ---- 季節ごとの背景 ----------------------------------------------
+    // 春:3〜5月 / 夏:6〜9月 / 秋:10〜11月 / 冬:12〜2月
+    // 背景ファイル名:bg_季節_時間帯.jpg と bg_季節_時間帯_cloudy.jpg
+    //   例)bg_autumn_morning.jpg / bg_winter_night_cloudy.jpg
+    // 夏は、最初に作った9月の6枚(bg_09_〜)をそのまま使う。
+    const SEASON_BG = {
+      spring: "spring",
+      summer: "09",
+      autumn: "autumn",
+      winter: "winter",
+    };
+    // 季節の画像がまだ無いときに代わりに使う季節(真っ黒を防ぐ)
+    const FALLBACK_SEASON = "summer";
+
+    function getSeason(m) {
+      if (m >= 3 && m <= 5) return "spring";
+      if (m >= 6 && m <= 9) return "summer";
+      if (m >= 10 && m <= 11) return "autumn";
+      return "winter";
+    }
+    function bgName(season, zone, cloudy) {
+      return BG_DIR + "bg_" + SEASON_BG[season] + "_" + zone + (cloudy ? "_cloudy" : "") + ".jpg";
+    }
+    // 読み込む候補を順番に並べる(先頭から試して、最初に見つかった画像を使う)
+    function bgCandidates(ctx, mainUrl) {
+      const list = [mainUrl,
+        bgName(ctx.season, ctx.zone, false),
+        bgName(FALLBACK_SEASON, ctx.zone, false)];
+      return list.filter(function (u, i) { return u && list.indexOf(u) === i; });
+    }
+
     // ---- 現在の日時コンテキストを取得 ----
     function getContext() {
       const now = new Date();
@@ -370,7 +401,7 @@
           if (hour >= r.start || hour < r.end) { zone = r.zone; break; }
         }
       }
-      return { now, hour, month: mm, day: dd, dateKey: mm + "-" + dd, zone };
+      return { now, hour, month: mm, day: dd, dateKey: mm + "-" + dd, zone, season: getSeason(now.getMonth() + 1) };
     }
 
     // ---- コンテンツ解決(特定日 > その日 > その月の汎用 > デフォルト)----
@@ -403,38 +434,37 @@
       }
       // 天気背景。曇・雨・雷・雪はすべて「曇り背景」を流用し、
       // その上に雨/雷/雪の演出を重ねる(ちゃぴぴは晴・曇の2枚だけ用意)。
-      // 例:9月の昼が雨 → bg/bg_09_afternoon_cloudy.jpg を使う
+      // 例:秋の昼が雨 → bg_autumn_afternoon_cloudy.jpg を使う
       if (WEATHER.enabled && WEATHER.useWeatherBg && ctx.weather && ctx.weather !== "clear") {
-        return BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + "_cloudy.jpg";
+        return bgName(ctx.season, ctx.zone, true);
       }
-      // 通常:bg/bg_MM_zone.jpg
-      return BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + ".jpg";
+      // 通常:bg_季節_時間帯.jpg
+      return bgName(ctx.season, ctx.zone, false);
     }
 
     // ---- 背景クロスフェード(画像が無ければ通常背景に自動フォールバック)----
     let activeBg = null;
-    function setBackground(url, fallbackUrl) {
+    function setBackground(urls) {
       const a = document.getElementById("bgA");
       const b = document.getElementById("bgB");
       const next = (activeBg === a) ? b : a;
       const prev = activeBg;
 
-      // 画像の存在を確認してから表示(天気背景が未用意でも崩れない)
-      const img = new Image();
-      img.onload = function () {
+      function show(url) {
         next.style.backgroundImage = "url('" + url + "')";
         next.classList.add("show");
         if (prev) prev.classList.remove("show");
         activeBg = next;
-      };
-      img.onerror = function () {
-        const use = fallbackUrl || url;
-        next.style.backgroundImage = "url('" + use + "')";
-        next.classList.add("show");
-        if (prev) prev.classList.remove("show");
-        activeBg = next;
-      };
-      img.src = url;
+      }
+      // 候補を順番に試す(季節の画像が未用意でも崩れない)
+      function tryAt(i) {
+        if (i >= urls.length) { show(urls[0]); return; }
+        const img = new Image();
+        img.onload = function () { show(urls[i]); };
+        img.onerror = function () { tryAt(i + 1); };
+        img.src = urls[i];
+      }
+      tryAt(0);
     }
 
     // ---- テキスト描画＋演出 ----
@@ -462,8 +492,7 @@
           ctx.weather = weather;          // clear / cloudy / rain / snow
           const result = resolveContent(ctx);
           const bgUrl = resolveBackground(ctx, result);
-          const fallback = BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + ".jpg";
-          setBackground(bgUrl, fallback); // 天気背景へ(無ければ通常へ)
+          setBackground(bgCandidates(ctx, bgUrl)); // 天気背景へ(無ければ通常へ)
           startWeatherFx(weather);        // 雨・雪を降らせる
         }).catch(function () { /* 天気失敗時は通常のまま */ });
       }
@@ -475,9 +504,7 @@
       const result = resolveContent(ctx);
       const content = result.data;
       const bgUrl = resolveBackground(ctx, result);
-      const fallback = BG_DIR + "bg_" + ctx.month + "_" + ctx.zone + ".jpg";
-
-      setBackground(bgUrl, fallback);
+      setBackground(bgCandidates(ctx, bgUrl));
 
       // 前回の演出が動いていたら止める(もう一度/再描画時)
       if (currentPlayback && currentPlayback.stop) currentPlayback.stop();
