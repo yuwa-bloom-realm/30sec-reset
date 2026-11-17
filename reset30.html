@@ -483,6 +483,18 @@
       return list.filter(function (u, i) { return u && list.indexOf(u) === i; });
     }
 
+    // ---- 特別な日を探す ----
+    // ふつうは日付("12-25"など)で探す。
+    // 十五夜のように年ごとに日付が変わる日は、MOVING_DAYS の表で探す。
+    function getSpecial(ctx) {
+      const days = window.SPECIAL_DAYS || {};
+      const moving = window.MOVING_DAYS || {};
+      for (const key in moving) {
+        if (moving[key][ctx.year] === ctx.dateKey && days[key]) return days[key];
+      }
+      return days[ctx.dateKey];
+    }
+
     // ---- 現在の日時コンテキストを取得 ----
     function getContext() {
       const now = new Date();
@@ -499,13 +511,13 @@
           if (hour >= r.start || hour < r.end) { zone = r.zone; break; }
         }
       }
-      return { now, hour, month: mm, day: dd, dateKey: mm + "-" + dd, zone, season: getSeason(now.getMonth() + 1) };
+      return { now, hour, year: now.getFullYear(), month: mm, day: dd, dateKey: mm + "-" + dd, zone, season: getSeason(now.getMonth() + 1) };
     }
 
     // ---- コンテンツ解決(特定日 > その日 > その月の汎用 > デフォルト)----
     function resolveContent(ctx) {
       // 1. 特定日チェック
-      const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
+      const special = getSpecial(ctx);
       if (special && special[ctx.zone]) {
         return { data: special[ctx.zone], special: true };
       }
@@ -526,7 +538,7 @@
 
     // ---- 背景解決(特定日 > 天気×月×時間帯 > 月×時間帯)----
     function resolveBackground(ctx, contentResult) {
-      const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
+      const special = getSpecial(ctx);
       // bg は「文字列=一日中」か「{ night: "..." } のように時間帯ごと」
       if (contentResult.special && special && special.bg) {
         const sbg = (typeof special.bg === "string") ? special.bg : special.bg[ctx.zone];
@@ -606,7 +618,7 @@
       if (el._sparkTimer) { clearInterval(el._sparkTimer); el._sparkTimer = null; }
       el.className = "banner";
       el.innerHTML = "";
-      const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
+      const special = getSpecial(ctx);
       if (!result.special || !special || !special.banner) return;
       // banner は「文字列」か { text: "...", style: "script" }
       const b = (typeof special.banner === "string") ? { text: special.banner } : special.banner;

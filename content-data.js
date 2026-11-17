@@ -965,6 +965,152 @@ window.DAY_CONTENT = {
    --------------------------------------------------------------------- */
 window.SPECIAL_DAYS = {
 
+  "02-14": {   // バレンタイン
+    bg: { night: "bg_special_valentine.jpg" },
+    banner: { text: "Happy Valentine's Day", style: "script" },
+    morning: {
+      greeting: "バレンタインの朝",
+      lines: ["今日は、バレンタイン。", "大切な人を、ひとり思い浮かべてみて。"],
+    },
+    afternoon: {
+      greeting: "バレンタイン",
+      lines: ["甘いものを、ひとつ。", "自分にも、ごほうびを。"],
+    },
+    night: {
+      greeting: "バレンタインの夜",
+      lines: ["今日、だれかを想った？", "その気持ちごと、あなたは素敵。"],
+    },
+  },
+
+  "03-03": {   // ひな祭り
+    bg: { night: "bg_special_hinamatsuri.jpg" },
+    morning: {
+      greeting: "ひな祭りの朝",
+      lines: ["今日は、ひな祭り。", "春が、すぐそこまで来てる。"],
+    },
+    afternoon: {
+      greeting: "ひな祭り",
+      lines: ["小さかったころのあなたに、", "「よくがんばったね」って。"],
+    },
+    night: {
+      greeting: "ひな祭りの夜",
+      lines: ["灯りをともして。", "あなたのしあわせを、そっと願う夜。"],
+    },
+  },
+
+  "04-01": {   // エイプリルフール
+    bg: { night: "bg_special_aprilfool.jpg" },
+    morning: {
+      greeting: "エイプリルフールの朝",
+      lines: ["今日は、エイプリルフール。", "ちょっとくらい、ふざけてもいい日。"],
+    },
+    afternoon: {
+      greeting: "エイプリルフール",
+      lines: ["まじめなあなたも、", "今日は少しだけ、ゆるんでみて。"],
+    },
+    night: {
+      greeting: "エイプリルフールの夜",
+      lines: ["今日いちばん笑ったのは、いつ？", "その笑顔は、うそじゃない。"],
+    },
+  },
+
+  "05-05": {   // こどもの日
+    bg: { night: "bg_special_kodomo.jpg" },
+    morning: {
+      greeting: "こどもの日の朝",
+      lines: ["今日は、こどもの日。", "心の中の小さなあなたも、元気？"],
+    },
+    afternoon: {
+      greeting: "こどもの日",
+      lines: ["すきなこと、ひとつ思い出して。", "子どものころ、夢中だったこと。"],
+    },
+    night: {
+      greeting: "こどもの日の夜",
+      lines: ["空に、こいのぼり。", "あなたも、まだまだ伸びていける。"],
+    },
+  },
+
+  "06-21": {   // 夏至
+    bg: { night: "bg_special_geshi.jpg" },
+    morning: {
+      greeting: "夏至の朝",
+      lines: ["今日は、夏至。", "一年でいちばん、昼が長い日。"],
+    },
+    afternoon: {
+      greeting: "夏至",
+      lines: ["光が、いちばん長くそばにいる日。", "あなたも、たっぷり浴びて。"],
+    },
+    night: {
+      greeting: "夏至の夕べ",
+      lines: ["長い一日、おつかれさま。", "ここから、夜がすこしずつ長くなる。"],
+    },
+  },
+
+  "08-15": {   // 花火の夜
+    bg: { night: "bg_special_hanabi.jpg" },
+    morning: {
+      greeting: "夏の朝",
+      lines: ["夏の、まんなか。", "今日も暑くなりそうだね。"],
+    },
+    afternoon: {
+      greeting: "夏の昼",
+      lines: ["冷たいものを、ひとつ。", "すこし休んで、いいんだよ。"],
+    },
+    night: {
+      greeting: "花火の夜",
+      lines: ["夜空に、大きな花。", "あなたの夏にも、きれいな思い出を。"],
+    },
+  },
+
+  "jugoya": {   // 十五夜(日付は MOVING_DAYS で年ごとに決まる)
+    bg: { night: "bg_special_jugoya.jpg" },
+    morning: {
+      greeting: "十五夜の朝",
+      lines: ["今夜は、十五夜。", "まんまるの月が、待ってるよ。"],
+    },
+    afternoon: {
+      greeting: "十五夜",
+      lines: ["夜になったら、", "すこしだけ空を見上げてみて。"],
+    },
+    night: {
+      greeting: "十五夜",
+      lines: ["まんまるの月。", "今日までのあなたに、おつかれさま。"],
+    },
+  },
+
+  "10-31": {   // ハロウィン
+    bg: { night: "bg_special_halloween.jpg" },
+    banner: { text: "Happy Halloween", style: "script" },
+    morning: {
+      greeting: "ハロウィンの朝",
+      lines: ["今日は、ハロウィン。", "ちょっとだけ、魔法をかけてみる？"],
+    },
+    afternoon: {
+      greeting: "ハロウィン",
+      lines: ["いつもとちがう自分に、", "なってみるのも、いい日。"],
+    },
+    night: {
+      greeting: "ハロウィンの夜",
+      lines: ["かぼちゃの灯りがゆれる夜。", "今夜は、魔法使いの時間。"],
+    },
+  },
+
+  "11-23": {   // 勤労感謝の日
+    bg: { night: "bg_special_kinrokansha.jpg" },
+    morning: {
+      greeting: "勤労感謝の日の朝",
+      lines: ["今日は、勤労感謝の日。", "毎日はたらくあなたに、ありがとう。"],
+    },
+    afternoon: {
+      greeting: "勤労感謝の日",
+      lines: ["だれかのためにがんばってきた手を、", "今日は、自分のために。"],
+    },
+    night: {
+      greeting: "勤労感謝の日の夜",
+      lines: ["湯けむりの夜。", "今日も、ほんとうにおつかれさま。"],
+    },
+  },
+
   "07-07": {
     bg: { night: "bg_special_tanabata.jpg" },   // 七夕:夜だけ天の川の背景
     banner: { text: "Tanabata", sub: "May your wish come true", style: "script" },
@@ -1110,4 +1256,20 @@ window.DEFAULT_FALLBACK = {
   morning:   { greeting: "あさ", lines: ["おはよう。", "まず、ひと呼吸。"] },
   afternoon: { greeting: "ひる", lines: ["少し、力を抜いて。"] },
   night:     { greeting: "よる", lines: ["今日も、おつかれさま。", "ゆっくり休もう。"] },
+};
+
+
+/* ---------------------------------------------------------------------
+   年によって日付が変わる特別な日(年: "月-日")
+   ・十五夜(中秋の名月)は国立天文台の暦より
+   ・ここに無い年は、その日の特別演出は出ない(足せばOK)
+   --------------------------------------------------------------------- */
+window.MOVING_DAYS = {
+  jugoya: {
+    2027: "09-15",
+    2028: "10-03",
+    2029: "09-22",
+    2030: "09-12",
+    2031: "10-01",
+  },
 };
