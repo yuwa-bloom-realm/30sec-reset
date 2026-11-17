@@ -998,7 +998,7 @@ window.SPECIAL_DAYS = {
   },
 
   "12-31": {
-    bg: "bg_special_newyearseve.jpg",
+    bg: { night: "bg_special_newyearseve.jpg" },   // 夜だけ特別背景(朝昼はふつうの冬)
     morning: {
       greeting: "大晦日",
       lines: ["一年の、いちばん最後の朝。"],
@@ -1014,7 +1014,7 @@ window.SPECIAL_DAYS = {
   },
 
   "01-01": {
-    bg: "bg_special_newyear.jpg",
+    bg: "bg_special_newyear.jpg",   // 元旦は一日中この背景
     morning: {
       greeting: "元旦",
       lines: ["あたらしい朝。", "まだ真っ白な一年が、目の前にある。"],
