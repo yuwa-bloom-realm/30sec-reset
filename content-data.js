@@ -965,6 +965,22 @@ window.DAY_CONTENT = {
    --------------------------------------------------------------------- */
 window.SPECIAL_DAYS = {
 
+  "07-07": {
+    bg: { night: "bg_special_tanabata.jpg" },   // 七夕:夜だけ天の川の背景
+    morning: {
+      greeting: "七夕の朝",
+      lines: ["今日は、七夕。", "どんな願いごとを、思い浮かべる？"],
+    },
+    afternoon: {
+      greeting: "七夕",
+      lines: ["一年に一度の、約束の日。", "あなたが会いたい人は、だれ？"],
+    },
+    night: {
+      greeting: "七夕の夜",
+      lines: ["空を、見上げてみて。", "あなたの願いも、きっと届いてる。"],
+    },
+  },
+
   "12-24": {
     bg: { night: "bg_special_christmas_eve.jpg" },   // 夜だけ特別背景(朝昼はふつうの冬)
     banner: { text: "Merry Christmas", style: "script" },   // 筆記体で魔法みたいに書かれる
