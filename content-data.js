@@ -967,6 +967,7 @@ window.SPECIAL_DAYS = {
 
   "07-07": {
     bg: { night: "bg_special_tanabata.jpg" },   // 七夕:夜だけ天の川の背景
+    banner: { text: "Tanabata", sub: "May your wish come true", style: "script" },
     morning: {
       greeting: "七夕の朝",
       lines: ["今日は、七夕。", "どんな願いごとを、思い浮かべる？"],

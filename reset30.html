@@ -346,6 +346,8 @@
     letter-spacing: 0.02em;
     top: 8%;
   }
+  .banner .bline { position: relative; line-height: 1.25; }
+  .banner .bline.sub { font-size: 0.55em; margin-top: 0.15em; }
   .banner .write {
     position: relative;
     display: inline-block;
@@ -614,29 +616,45 @@
       let shownAt;
       if (b.style === "script") {
         // 筆記体:光の玉が左から走って、その跡に文字が書かれていく
+        // sub があれば、1行目を書き終わったあとに2行目(小さめ)を書く
         el.classList.add("script");
-        const write = document.createElement("span");
-        write.className = "write";
-        write.textContent = text;
-        const wand = document.createElement("span");
-        wand.className = "wand";
-        el.appendChild(write);
-        el.appendChild(wand);
-        // 光の玉の位置を文字の横幅に合わせる
+        const WRITE = 2600, GAP = 400;
+        const rows = [{ text: text, cls: "" }];
+        if (b.sub) rows.push({ text: b.sub, cls: " sub" });
+        const pr0 = function () { return el.getBoundingClientRect(); };
+        const parts = rows.map(function (row, idx) {
+          const line = document.createElement("div");
+          line.className = "bline" + row.cls;
+          const write = document.createElement("span");
+          write.className = "write";
+          write.textContent = row.text;
+          const delay = 300 + idx * (WRITE + GAP);
+          write.style.animationDelay = delay + "ms";
+          const wand = document.createElement("span");
+          wand.className = "wand";
+          wand.style.animationDelay = delay + "ms";
+          line.appendChild(write);
+          line.appendChild(wand);
+          el.appendChild(line);
+          return { line: line, write: write, wand: wand, delay: delay };
+        });
         const place = function () {
-          const r = write.getBoundingClientRect(), pr = el.getBoundingClientRect();
-          wand.style.marginLeft = (r.left - pr.left - 7) + "px";
-          wand.style.width = "14px";
-          wand.style.setProperty("--w", r.width + "px");
-          wand.animate([{ left: "0px" }, { left: r.width + "px" }],
-            { duration: 2600, delay: 300, easing: "cubic-bezier(.45,.05,.35,1)", fill: "forwards" });
+          const pr = pr0();
+          parts.forEach(function (pt) {
+            const r = pt.write.getBoundingClientRect(), lr = pt.line.getBoundingClientRect();
+            pt.wand.style.marginLeft = (r.left - lr.left - 7) + "px";
+            pt.wand.animate([{ left: "0px" }, { left: r.width + "px" }],
+              { duration: WRITE, delay: pt.delay, easing: "cubic-bezier(.45,.05,.35,1)", fill: "forwards" });
+          });
           // 光の玉からこぼれるキラキラ
-          const t0 = performance.now() + 300;
+          const t0 = performance.now();
+          const total = parts[parts.length - 1].delay + WRITE;
           el._sparkTimer = setInterval(function () {
-            const k = (performance.now() - t0) / 2600;
-            if (k < 0) return;
-            if (k > 1) { clearInterval(el._sparkTimer); el._sparkTimer = null; return; }
-            const wr = wand.getBoundingClientRect();
+            const t = performance.now() - t0;
+            if (t > total) { clearInterval(el._sparkTimer); el._sparkTimer = null; return; }
+            const pt = parts.filter(function (q) { return t >= q.delay && t <= q.delay + WRITE; })[0];
+            if (!pt) return;
+            const wr = pt.wand.getBoundingClientRect();
             const sp = document.createElement("span");
             sp.className = "spark";
             sp.style.left = (wr.left - pr.left + 5 + (Math.random() * 10 - 5)) + "px";
@@ -648,7 +666,7 @@
           }, 60);
         };
         (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(place);
-        shownAt = 300 + 2600;
+        shownAt = parts[parts.length - 1].delay + WRITE;
       } else {
         // ふつう:1文字ずつ流れるように
         const STEP = 140; // 1文字ごとの間隔(ミリ秒)
