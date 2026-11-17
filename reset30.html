@@ -429,8 +429,10 @@
     // ---- 背景解決(特定日 > 天気×月×時間帯 > 月×時間帯)----
     function resolveBackground(ctx, contentResult) {
       const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
+      // bg は「文字列=一日中」か「{ night: "..." } のように時間帯ごと」
       if (contentResult.special && special && special.bg) {
-        return BG_DIR + special.bg; // 例:bg/bg_special_christmas.jpg
+        const sbg = (typeof special.bg === "string") ? special.bg : special.bg[ctx.zone];
+        if (sbg) return BG_DIR + sbg; // 例:bg_special_christmas.jpg
       }
       // 天気背景。曇・雨・雷・雪はすべて「曇り背景」を流用し、
       // その上に雨/雷/雪の演出を重ねる(ちゃぴぴは晴・曇の2枚だけ用意)。
