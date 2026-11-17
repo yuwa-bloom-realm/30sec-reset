@@ -965,6 +965,22 @@ window.DAY_CONTENT = {
    --------------------------------------------------------------------- */
 window.SPECIAL_DAYS = {
 
+  "12-24": {
+    bg: "bg_special_christmas_eve.jpg",   // クリスマスイブの特別背景(朝昼夜共通)
+    morning: {
+      greeting: "イブの朝",
+      lines: ["今日は、クリスマスイブ。", "なんだか、空気がやさしい。"],
+    },
+    afternoon: {
+      greeting: "イブの昼",
+      lines: ["街がすこし、そわそわしてる。", "あなたも、ひと息。"],
+    },
+    night: {
+      greeting: "イブの夜",
+      lines: ["灯りをともして。", "今夜は、ゆっくりでいい。"],
+    },
+  },
+
   "12-25": {
     bg: "bg_special_christmas.jpg",   // ← 時間帯共通の特別背景(任意)
     morning: {
