@@ -1029,6 +1029,38 @@ window.SPECIAL_DAYS = {
     },
   },
 
+  "01-02": {
+    bg: "bg_special_newyear.jpg",   // お正月(1/1〜1/3)は同じ背景
+    morning: {
+      greeting: "お正月",
+      lines: ["お正月の、ふたつめの朝。", "まだ、のんびりしていていい。"],
+    },
+    afternoon: {
+      greeting: "お正月",
+      lines: ["あったかいものを、ひとつ。", "今年のあなたに、乾杯。"],
+    },
+    night: {
+      greeting: "お正月の夜",
+      lines: ["ゆっくりできた？", "今夜も、よく休んでね。"],
+    },
+  },
+
+  "01-03": {
+    bg: "bg_special_newyear.jpg",   // お正月(1/1〜1/3)は同じ背景
+    morning: {
+      greeting: "お正月",
+      lines: ["三が日、さいごの朝。", "そろそろ、ゆっくり動きだそう。"],
+    },
+    afternoon: {
+      greeting: "お正月",
+      lines: ["今年やってみたいこと、", "ひとつだけ思い浮かべてみて。"],
+    },
+    night: {
+      greeting: "お正月の夜",
+      lines: ["三が日、おつかれさま。", "明日からも、あなたのペースで。"],
+    },
+  },
+
 };
 
 
