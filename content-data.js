@@ -967,7 +967,7 @@ window.SPECIAL_DAYS = {
 
   "12-24": {
     bg: { night: "bg_special_christmas_eve.jpg" },   // 夜だけ特別背景(朝昼はふつうの冬)
-    banner: "メリークリスマス",   // 画面の上に流れるように出るお祝いの文字
+    banner: { text: "Merry Christmas", style: "script" },   // 筆記体で魔法みたいに書かれる
     morning: {
       greeting: "イブの朝",
       lines: ["今日は、クリスマスイブ。", "なんだか、空気がやさしい。"],
@@ -984,7 +984,7 @@ window.SPECIAL_DAYS = {
 
   "12-25": {
     bg: { night: "bg_special_christmas.jpg" },   // 夜だけ特別背景(朝昼はふつうの冬)
-    banner: "メリークリスマス",   // 画面の上に流れるように出るお祝いの文字
+    banner: { text: "Merry Christmas", style: "script" },   // 筆記体で魔法みたいに書かれる
     morning: {
       greeting: "聖なる朝",
       lines: ["静かな雪の朝。", "今日はすこし、特別。"],

@@ -333,6 +333,63 @@
   @media (prefers-reduced-motion: reduce) {
     .banner .ch { animation: none; opacity: 1; }
   }
+
+  /* 筆記体のお祝い文字(魔法で書くみたいに左からするるる〜) */
+  @font-face {
+    font-family: "GreatVibes";
+    src: url("GreatVibes.woff2") format("woff2");
+    font-display: block;
+  }
+  .banner.script {
+    font-family: "GreatVibes", cursive;
+    font-size: 3.1rem;
+    letter-spacing: 0.02em;
+    top: 8%;
+  }
+  .banner .write {
+    position: relative;
+    display: inline-block;
+    padding: 0 0.3em;
+    clip-path: inset(-40% 100% -40% 0);
+    animation: writeIn 2600ms cubic-bezier(.45,.05,.35,1) 300ms forwards;
+  }
+  @keyframes writeIn { to { clip-path: inset(-40% -5% -40% 0); } }
+  .banner .wand {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 14px; height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fffbe8 0%, rgba(255, 220, 140, 0.9) 35%, rgba(255, 200, 100, 0) 70%);
+    box-shadow: 0 0 18px 6px rgba(255, 214, 140, 0.75);
+    opacity: 0;
+    animation: wandMove 2600ms cubic-bezier(.45,.05,.35,1) 300ms forwards;
+  }
+  @keyframes wandMove {
+    0%   { opacity: 0; }
+    8%   { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .banner .spark {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #fff4cc;
+    box-shadow: 0 0 6px 2px rgba(255, 210, 130, 0.9);
+    pointer-events: none;
+    animation: sparkFall 1300ms ease-out forwards;
+  }
+  @keyframes sparkFall {
+    from { opacity: 1; transform: translate(0, 0) scale(1); }
+    to   { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+  }
+  @media (max-width: 380px) { .banner.script { font-size: 2.6rem; } }
+  @media (prefers-reduced-motion: reduce) {
+    .banner .write { animation: none; clip-path: none; }
+    .banner .wand { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -544,23 +601,68 @@
     function showBanner(ctx, result) {
       const el = document.getElementById("banner");
       if (bannerTimer) { clearTimeout(bannerTimer); bannerTimer = null; }
+      if (el._sparkTimer) { clearInterval(el._sparkTimer); el._sparkTimer = null; }
       el.className = "banner";
       el.innerHTML = "";
       const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
       if (!result.special || !special || !special.banner) return;
-      const text = (typeof special.banner === "string") ? special.banner : special.banner[ctx.zone];
+      // banner は「文字列」か { text: "...", style: "script" }
+      const b = (typeof special.banner === "string") ? { text: special.banner } : special.banner;
+      const text = b.text;
       if (!text) return;
-      const STEP = 140; // 1文字ごとの間隔(ミリ秒)
-      Array.from(text).forEach(function (c, i) {
-        const span = document.createElement("span");
-        span.className = "ch";
-        span.textContent = c;
-        span.style.animationDelay = (300 + i * STEP) + "ms";
-        el.appendChild(span);
-      });
+
+      let shownAt;
+      if (b.style === "script") {
+        // 筆記体:光の玉が左から走って、その跡に文字が書かれていく
+        el.classList.add("script");
+        const write = document.createElement("span");
+        write.className = "write";
+        write.textContent = text;
+        const wand = document.createElement("span");
+        wand.className = "wand";
+        el.appendChild(write);
+        el.appendChild(wand);
+        // 光の玉の位置を文字の横幅に合わせる
+        const place = function () {
+          const r = write.getBoundingClientRect(), pr = el.getBoundingClientRect();
+          wand.style.marginLeft = (r.left - pr.left - 7) + "px";
+          wand.style.width = "14px";
+          wand.style.setProperty("--w", r.width + "px");
+          wand.animate([{ left: "0px" }, { left: r.width + "px" }],
+            { duration: 2600, delay: 300, easing: "cubic-bezier(.45,.05,.35,1)", fill: "forwards" });
+          // 光の玉からこぼれるキラキラ
+          const t0 = performance.now() + 300;
+          el._sparkTimer = setInterval(function () {
+            const k = (performance.now() - t0) / 2600;
+            if (k < 0) return;
+            if (k > 1) { clearInterval(el._sparkTimer); el._sparkTimer = null; return; }
+            const wr = wand.getBoundingClientRect();
+            const sp = document.createElement("span");
+            sp.className = "spark";
+            sp.style.left = (wr.left - pr.left + 5 + (Math.random() * 10 - 5)) + "px";
+            sp.style.top = (wr.top - pr.top + 5 + (Math.random() * 16 - 8)) + "px";
+            sp.style.setProperty("--dx", (Math.random() * 30 - 15) + "px");
+            sp.style.setProperty("--dy", (10 + Math.random() * 30) + "px");
+            el.appendChild(sp);
+            setTimeout(function () { sp.remove(); }, 1400);
+          }, 60);
+        };
+        (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(place);
+        shownAt = 300 + 2600;
+      } else {
+        // ふつう:1文字ずつ流れるように
+        const STEP = 140; // 1文字ごとの間隔(ミリ秒)
+        Array.from(text).forEach(function (c, i) {
+          const span = document.createElement("span");
+          span.className = "ch";
+          span.textContent = c;
+          span.style.animationDelay = (300 + i * STEP) + "ms";
+          el.appendChild(span);
+        });
+        shownAt = 300 + text.length * STEP;
+      }
       // 出きってから約6秒見せて、ふわっと消す(本文のじゃまをしない)
-      bannerTimer = setTimeout(function () { el.classList.add("leave"); },
-        300 + text.length * STEP + 6000);
+      bannerTimer = setTimeout(function () { el.classList.add("leave"); }, shownAt + 6000);
     }
 
     // 実際のシーン描画(背景 → テンプレ演出を起動)
