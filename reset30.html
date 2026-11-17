@@ -295,6 +295,44 @@
   @media (max-width: 480px) {
     .message { font-size: 1.3rem; line-height: 2.2; }
   }
+
+  /* 特別な日のお祝いの文字(例:あけましておめでとう)。画面の上のほうに流れるように出る */
+  .banner {
+    position: fixed;
+    left: 0; right: 0;
+    top: 11%;
+    z-index: 3;
+    text-align: center;
+    pointer-events: none;
+    font-size: 1.75rem;
+    letter-spacing: 0.22em;
+    color: #fff6dc;
+    text-shadow:
+      0 0 10px rgba(255, 214, 140, 0.85),
+      0 0 26px rgba(255, 190, 90, 0.55),
+      0 1px 3px rgba(40, 20, 0, 0.75),
+      0 2px 10px rgba(0, 0, 0, 0.55);
+    white-space: nowrap;
+  }
+  .banner .ch {
+    display: inline-block;
+    opacity: 0;
+    animation: bannerFlow 1100ms ease forwards;
+  }
+  @keyframes bannerFlow {
+    0%   { opacity: 0; transform: translate(-14px, 8px); filter: blur(6px); }
+    60%  { opacity: 1; filter: blur(0); }
+    100% { opacity: 1; transform: translate(0, 0); filter: blur(0); }
+  }
+  .banner.leave { animation: bannerLeave 2600ms ease forwards; }
+  @keyframes bannerLeave {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-14px); filter: blur(3px); }
+  }
+  @media (max-width: 380px) { .banner { font-size: 1.45rem; letter-spacing: 0.16em; } }
+  @media (prefers-reduced-motion: reduce) {
+    .banner .ch { animation: none; opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -310,6 +348,7 @@
     <div class="message" id="message"></div>
     <div class="closing" id="closing"></div>
   </div>
+  <div class="banner" id="banner"></div>
 
   <div class="timer"><div class="fill" id="timerFill"></div></div>
   <button class="replay" id="replay">もう一度</button>
@@ -500,6 +539,30 @@
       }
     }
 
+    // ---- お祝いの文字を流す(1文字ずつ流れるように → しばらくしてふわっと消える)----
+    let bannerTimer = null;
+    function showBanner(ctx, result) {
+      const el = document.getElementById("banner");
+      if (bannerTimer) { clearTimeout(bannerTimer); bannerTimer = null; }
+      el.className = "banner";
+      el.innerHTML = "";
+      const special = (window.SPECIAL_DAYS || {})[ctx.dateKey];
+      if (!result.special || !special || !special.banner) return;
+      const text = (typeof special.banner === "string") ? special.banner : special.banner[ctx.zone];
+      if (!text) return;
+      const STEP = 140; // 1文字ごとの間隔(ミリ秒)
+      Array.from(text).forEach(function (c, i) {
+        const span = document.createElement("span");
+        span.className = "ch";
+        span.textContent = c;
+        span.style.animationDelay = (300 + i * STEP) + "ms";
+        el.appendChild(span);
+      });
+      // 出きってから約6秒見せて、ふわっと消す(本文のじゃまをしない)
+      bannerTimer = setTimeout(function () { el.classList.add("leave"); },
+        300 + text.length * STEP + 6000);
+    }
+
     // 実際のシーン描画(背景 → テンプレ演出を起動)
     let currentPlayback = null;
     function drawScene(ctx) {
@@ -522,6 +585,9 @@
       resetGreeting.className = "greeting";
       resetGreeting.textContent = "";
       document.getElementById("replay").classList.remove("show");
+
+      // 特別な日のお祝いの文字(SPECIAL_DAYS の banner)
+      showBanner(ctx, result);
 
       // テンプレを解決(指定が無ければ既定テンプレ)
       const tplName = content.template || DEFAULT_TEMPLATE;

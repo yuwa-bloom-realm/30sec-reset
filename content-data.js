@@ -1015,6 +1015,7 @@ window.SPECIAL_DAYS = {
 
   "01-01": {
     bg: "bg_special_newyear.jpg",   // 元旦は一日中この背景
+    banner: "あけましておめでとう",   // 画面の上に流れるように出るお祝いの文字
     morning: {
       greeting: "元旦",
       lines: ["あたらしい朝。", "まだ真っ白な一年が、目の前にある。"],
